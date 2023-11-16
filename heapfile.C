@@ -45,7 +45,13 @@ const Status createHeapFile(const string fileName)
         status = bufMgr->unPinPage(file, newPageNo, true);
         if (status != OK) return status;
 
-        //might need to close adn flush to disk
+        status = bufMgr->flushFile(file);
+        if (status != OK) return status;
+
+        status = db.closeFile(file);
+        if (status != OK) return status;
+
+        return OK;
     }
     return (FILEEXISTS);
 }
@@ -174,7 +180,17 @@ const Status HeapFile::getRecord(const RID & rid, Record & rec)
             return OK;
         }
     }
-   
+    else{
+        status = bufMgr->readPage(filePtr, rid.pageNo, curPage);
+        if (status != OK) return status;
+        curPageNo = rid.pageNo;
+        curDirtyFlag = false;
+        
+        status = curPage->getRecord(rid, rec);
+        if (status != OK) return status;
+        curRec = rid;
+        return OK;
+    }
 }
 
 HeapFileScan::HeapFileScan(const string & name,
@@ -403,20 +419,9 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
     {
         // will never fit on a page, so don't even bother looking
         return INVALIDRECLEN;
-    }
+    }  
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+    
 }
 
 
